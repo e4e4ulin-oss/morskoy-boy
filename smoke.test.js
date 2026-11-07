@@ -1,0 +1,25 @@
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),{spawn}=require('node:child_process');
+const html=fs.readFileSync(require('node:path').join(__dirname,'public/index.html'),'utf8');
+test('HTML client JavaScript parses',()=>{const m=html.match(/<script>([\s\S]*?)<\/script>/);assert.ok(m,'inline game script exists');new vm.Script(m[1],{filename:'public/index.html'})});
+test('two phones: create, join, deploy, shoot, turn, victory',async()=>{
+const port=31000+Math.floor(Math.random()*20000),base='http://127.0.0.1:'+port,child=spawn(process.execPath,['server.js'],{cwd:__dirname,env:{...process.env,PORT:String(port)},stdio:'pipe'});
+const post=async(action,body={})=>{const r=await fetch(base+'/api/'+action,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(4000)});return {status:r.status,data:await r.json()}};
+try{
+let ready=false;for(let i=0;i<45;i++){if(child.exitCode!==null)throw Error('Server exited');try{let r=await fetch(base+'/health',{signal:AbortSignal.timeout(300)});if(r.ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,100))}assert.ok(ready,'server starts');
+const a=await post('create');assert.equal(a.status,200);assert.match(a.data.code,/^[A-F0-9]{6}$/);
+const b=await post('join',{code:a.data.code});assert.equal(b.status,200);assert.notEqual(a.data.token,b.data.token);
+assert.equal((await post('join',{code:a.data.code})).status,409);
+const board=Array.from({length:9},()=>Array(9).fill(0));
+for(const [y,x,n] of [[0,0,4],[0,5,3],[2,0,3],[2,4,2],[2,7,2],[4,0,2],[4,3,1],[4,5,1],[4,7,1],[6,0,1]])for(let i=0;i<n;i++)board[y][x+i]=1;
+assert.equal((await post('ready',{...a.data,board})).status,200);
+const waiting=await post('state',b.data);assert.equal(waiting.data.phase,'setup');
+const deployed=await post('ready',{...b.data,board});assert.equal(deployed.status,200);assert.equal(deployed.data.phase,'battle');
+assert.equal((await post('fire',{...b.data,x:8,y:8})).status,409);
+const miss=await post('fire',{...a.data,x:8,y:8});assert.equal(miss.data.last.result,'Мимо');assert.equal(miss.data.turn,1);
+const hit=await post('fire',{...b.data,x:0,y:0});assert.equal(hit.data.last.result,'Попал');assert.equal(hit.data.turn,1);
+assert.equal((await post('fire',{...b.data,x:0,y:0})).status,409);
+for(const [y,x,n] of [[0,0,4],[0,5,3],[2,0,3],[2,4,2],[2,7,2],[4,0,2],[4,3,1],[4,5,1],[4,7,1],[6,0,1]])for(let i=0;i<n;i++){if(y===0&&x+i===0)continue;var result=await post('fire',{...b.data,x:x+i,y});assert.equal(result.status,200)}
+assert.equal(result.data.phase,'finished');assert.equal(result.data.winner,1);assert.equal(result.data.last.result,'Победа!');
+assert.equal((await post('fire',{...a.data,x:1,y:1})).status,409);
+}finally{child.kill('SIGTERM')}
+});
