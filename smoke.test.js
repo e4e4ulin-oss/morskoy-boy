@@ -16,9 +16,9 @@ const waiting=await post('state',b.data);assert.equal(waiting.data.phase,'setup'
 const deployed=await post('ready',{...b.data,board});assert.equal(deployed.status,200);assert.equal(deployed.data.phase,'battle');
 assert.equal((await post('fire',{...b.data,x:8,y:8})).status,409);
 const miss=await post('fire',{...a.data,x:8,y:8});assert.equal(miss.data.last.result,'Мимо');assert.equal(miss.data.turn,1);
-const hit=await post('fire',{...b.data,x:0,y:0});assert.equal(hit.data.last.result,'Попал');assert.equal(hit.data.turn,1);
+const hit=await post('fire',{...b.data,x:0,y:0});assert.equal(hit.data.last.result,'Попал');assert.equal(hit.data.turn,1);assert.equal(hit.data.enemyShots[1][0],0,'a wounded ship does not auto-mark neighboring water');
 assert.equal((await post('fire',{...b.data,x:0,y:0})).status,409);
-for(const [y,x,n] of [[0,0,4],[0,5,3],[2,0,3],[2,4,2],[2,7,2],[4,0,2],[4,3,1],[4,5,1],[4,7,1],[6,0,1]])for(let i=0;i<n;i++){if(y===0&&x+i===0)continue;var result=await post('fire',{...b.data,x:x+i,y});assert.equal(result.status,200)}
+for(const [y,x,n] of [[0,0,4],[0,5,3],[2,0,3],[2,4,2],[2,7,2],[4,0,2],[4,3,1],[4,5,1],[4,7,1],[6,0,1]])for(let i=0;i<n;i++){if(y===0&&x+i===0)continue;var result=await post('fire',{...b.data,x:x+i,y});assert.equal(result.status,200);if(y===0&&x===0&&i===3){assert.equal(result.data.last.result,'Убил');assert.equal(result.data.enemyShots[1][0],4,'perimeter below sunk ship is marked');assert.equal(result.data.enemyShots[1][4],4,'diagonal perimeter is marked');assert.equal((await post('fire',{...b.data,x:0,y:1})).status,409,'inferred empty cells cannot be fired upon')}}
 assert.equal(result.data.phase,'finished');assert.equal(result.data.winner,1);assert.equal(result.data.last.result,'Победа!');
 assert.equal((await post('fire',{...a.data,x:1,y:1})).status,409);
 }finally{child.kill('SIGTERM')}
