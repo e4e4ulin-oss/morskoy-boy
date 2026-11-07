@@ -1,1 +1,11 @@
-{"name":"morskoy-boy","version":"1.0.0","scripts":{"start":"node server.js"},"engines":{"node":">=18"}}
+{
+  "name": "morskoy-boy",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "npm test && node server.js",
+    "test": "node --test smoke.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
