@@ -27,6 +27,12 @@ const hit=await post('fire',{...b.data,x:0,y:0});assert.equal(hit.data.last.resu
 assert.equal((await post('fire',{...b.data,x:0,y:0})).status,409);
 for(const [y,x,n] of [[0,0,4],[0,5,3],[2,0,3],[2,4,2],[2,7,2],[4,0,2],[4,3,1],[4,5,1],[4,7,1],[6,0,1]])for(let i=0;i<n;i++){if(y===0&&x+i===0)continue;var result=await post('fire',{...b.data,x:x+i,y});assert.equal(result.status,200);verifyNoFalseWater(result.data,board);if(y===0&&x===0&&i===3){assert.equal(result.data.last.result,'Убил');assert.equal(result.data.enemyShots[1][0],4,'perimeter below sunk ship is marked');assert.equal(result.data.enemyShots[1][4],4,'diagonal perimeter is marked');assert.equal(result.data.enemyShots[2][0],0,'cells beyond sunk ship are not excluded');assert.equal((await post('fire',{...b.data,x:0,y:1})).status,409,'inferred empty cells cannot be fired upon')}}
 assert.equal(result.data.phase,'finished');assert.equal(result.data.winner,1);assert.equal(result.data.last.result,'Победа!');
-assert.equal((await post('fire',{...a.data,x:1,y:1})).status,409);
+assert.equal((await post('rematch',a.data)).status,200,'first player requests rematch');
+let waitingRematch=await post('state',b.data);assert.equal(waitingRematch.data.phase,'finished');assert.deepEqual(waitingRematch.data.rematch,[true,false]);
+let restarted=await post('rematch',b.data);assert.equal(restarted.status,200);assert.equal(restarted.data.phase,'setup');assert.equal(restarted.data.round,2);assert.deepEqual(restarted.data.rematch,[false,false]);assert.deepEqual(restarted.data.ready,[false,false]);assert.equal(restarted.data.winner,null);assert.equal(restarted.data.last,null);assert.equal(restarted.data.enemyShots.flat().filter(Boolean).length,0);
+assert.equal((await post('ready',{...a.data,board})).status,200);assert.equal((await post('ready',{...b.data,board})).data.phase,'battle');
+assert.equal((await post('rematch',a.data)).status,409,'cannot reset an active match');
+
+assert.equal((await post('fire',{...a.data,x:0,y:0})).status,200);
 }finally{child.kill('SIGTERM')}
 });
