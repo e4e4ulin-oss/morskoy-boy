@@ -33,6 +33,6 @@ let restarted=await post('rematch',b.data);assert.equal(restarted.status,200);as
 assert.equal((await post('ready',{...a.data,board})).status,200);assert.equal((await post('ready',{...b.data,board})).data.phase,'battle');
 assert.equal((await post('rematch',a.data)).status,409,'cannot reset an active match');
 
-assert.equal((await post('fire',{...a.data,x:0,y:0})).status,200);
+assert.equal((await post('fire',{...a.data,x:0,y:0})).status,409);assert.equal((await post('fire',{...b.data,x:0,y:0})).status,200);
 }finally{child.kill('SIGTERM')}
 });
