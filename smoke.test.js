@@ -1,13 +1,16 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),{spawn}=require('node:child_process');
 const html=fs.readFileSync(require('node:path').join(__dirname,'public/index.html'),'utf8');
 test('production graphic assets exist and are self-contained SVG',()=>{const path=require('node:path');for(const name of ['harbor','water','impact','splash','smoke','fire','radar','ship-1','ship-2','ship-3','ship-4']){const file=path.join(__dirname,'public','assets',name+'.svg');assert.ok(fs.existsSync(file),'missing graphic asset '+name);const svg=fs.readFileSync(file,'utf8');assert.match(svg,/<svg\b/);assert.match(svg,/<\/svg>/);assert.doesNotMatch(svg,/<script\b|<foreignObject\b/i)}});
-test('game references dedicated ship assets and mobile layout',()=>{for(const asset of ['harbor.svg','water.svg','splash.svg','smoke.svg','fire.svg','radar.svg'])assert.ok(html.includes('/assets/'+asset),'asset referenced '+asset);assert.ok(html.includes("'ship-'+cells.length+'.svg'") || html.includes('/assets/ship-'),'fleet uses dedicated art');assert.ok(html.includes('100dvh'),'mobile one-screen sizing')});
+test('game references dedicated ship assets and mobile layout',()=>{for(const asset of ['harbor.svg','water.svg','splash.svg','smoke.svg','fire.svg','radar.svg'])assert.ok(html.includes('/assets/'+asset),'asset referenced '+asset);assert.ok(html.includes("/assets/photo/ship_'+cells.length+'.webp"),'fleet uses dedicated art');assert.ok(html.includes('100dvh'),'mobile one-screen sizing')});
 test('HTML client JavaScript parses',()=>{const m=html.match(/<script>([\s\S]*?)<\/script>/);assert.ok(m,'inline game script exists');new vm.Script(m[1],{filename:'public/index.html'})});
 test('two phones: create, join, deploy, shoot, turn, victory',async()=>{
 const port=31000+Math.floor(Math.random()*20000),base='http://127.0.0.1:'+port,child=spawn(process.execPath,['server.js'],{cwd:__dirname,env:{...process.env,PORT:String(port)},stdio:'pipe'});
 const post=async(action,body={})=>{const r=await fetch(base+'/api/'+action,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(4000)});return {status:r.status,data:await r.json()}};
 try{
 let ready=false;for(let i=0;i<45;i++){if(child.exitCode!==null)throw Error('Server exited');try{let r=await fetch(base+'/health',{signal:AbortSignal.timeout(300)});if(r.ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,100))}assert.ok(ready,'server starts');
+for(const name of fs.readdirSync(require('node:path').join(__dirname,'public/assets/photo')).filter(n=>n!=='reference_concept.webp')){let r=await fetch(base+'/assets/photo/'+name);assert.equal(r.status,200,name);assert.match(r.headers.get('content-type'),/image\/webp/);assert.equal(Buffer.from(await r.arrayBuffer()).toString('ascii',0,4),'RIFF')}
+assert.equal((await fetch(base+'/assets/missing.webp')).status,404);
+assert.equal((await fetch(base+'/assets/%2e%2e%2f%2e%2e%2fserver.js')).status,404);
 const a=await post('create');assert.equal(a.status,200);assert.match(a.data.code,/^[A-F0-9]{6}$/);
 const b=await post('join',{code:a.data.code});assert.equal(b.status,200);assert.notEqual(a.data.token,b.data.token);
 assert.equal((await post('join',{code:a.data.code})).status,409);
