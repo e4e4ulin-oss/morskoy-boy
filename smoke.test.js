@@ -8,7 +8,8 @@ const port=31000+Math.floor(Math.random()*20000),base='http://127.0.0.1:'+port,c
 const post=async(action,body={})=>{const r=await fetch(base+'/api/'+action,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(4000)});return {status:r.status,data:await r.json()}};
 try{
 let ready=false;for(let i=0;i<45;i++){if(child.exitCode!==null)throw Error('Server exited');try{let r=await fetch(base+'/health',{signal:AbortSignal.timeout(300)});if(r.ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,100))}assert.ok(ready,'server starts');
-for(const name of fs.readdirSync(require('node:path').join(__dirname,'public/assets/photo')).filter(n=>n!=='reference_concept.webp')){let r=await fetch(base+'/assets/photo/'+name);assert.equal(r.status,200,name);assert.match(r.headers.get('content-type'),/image\/webp/);assert.equal(Buffer.from(await r.arrayBuffer()).toString('ascii',0,4),'RIFF')}
+for(const name of fs.readdirSync(require('node:path').join(__dirname,'public/assets/photo')).filter(n=>n.endsWith('.webp')&&n!=='reference_concept.webp')){let r=await fetch(base+'/assets/photo/'+name);assert.equal(r.status,200,name);assert.match(r.headers.get('content-type'),/image\/webp/);assert.equal(Buffer.from(await r.arrayBuffer()).toString('ascii',0,4),'RIFF')}
+let crop=await fetch(base+'/assets/photo/ship-1-corrected.svg');assert.equal(crop.status,200);assert.match(crop.headers.get('content-type'),/image\/svg\+xml/);assert.match(await crop.text(),/viewBox="873 452 92 42"/);
 assert.equal((await fetch(base+'/assets/missing.webp')).status,404);
 assert.equal((await fetch(base+'/assets/%2e%2e%2f%2e%2e%2fserver.js')).status,404);
 const a=await post('create');assert.equal(a.status,200);assert.match(a.data.code,/^[A-F0-9]{6}$/);
