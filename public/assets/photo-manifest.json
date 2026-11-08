@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "format": "webp",
+  "source": "bratva_assets_v2.zip",
+  "required": [
+    "/assets/photo/background_sunset.webp",
+    "/assets/photo/background_night.webp",
+    "/assets/photo/ship_1.webp",
+    "/assets/photo/ship_2.webp",
+    "/assets/photo/ship_3.webp",
+    "/assets/photo/ship_4.webp",
+    "/assets/photo/ship_damaged.webp",
+    "/assets/photo/ship_burning.webp",
+    "/assets/photo/water_splash.webp",
+    "/assets/photo/explosion.webp",
+    "/assets/photo/fire_smoke.webp",
+    "/assets/photo/radar.webp",
+    "/assets/photo/ui_metal_panel.webp",
+    "/assets/photo/ui_green_panel.webp",
+    "/assets/photo/ui_red_status.webp",
+    "/assets/photo/water_tile.webp",
+    "/assets/photo/water_miss.webp",
+    "/assets/photo/water_hit.webp",
+    "/assets/photo/water_fire.webp"
+  ],
+  "notes": "Original generated raster assets. Do not mark integration complete until files exist and image load checks pass."
+}
