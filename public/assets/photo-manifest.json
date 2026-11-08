@@ -3,6 +3,7 @@
   "format": "webp",
   "source": "bratva_assets_v2.zip",
   "required": [
+    "/assets/photo/battle_composition.webp",
     "/assets/photo/background_sunset.webp",
     "/assets/photo/background_night.webp",
     "/assets/photo/ship_1.webp",
@@ -23,5 +24,5 @@
     "/assets/photo/water_hit.webp",
     "/assets/photo/water_fire.webp"
   ],
-  "notes": "Original generated raster assets. Do not mark integration complete until files exist and image load checks pass."
+  "notes": "20 original generated raster assets, reference_concept.webp is an additional visual guide. Do not mark complete until image load checks pass."
 }
